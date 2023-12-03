@@ -146,7 +146,7 @@ class CLICompletions:
         should_print_header = len(completion.choices) > 1
         for choice in completion.choices:
             if should_print_header:
-                sys.stdout.write("===== Completion {} =====\n".format(choice.index))
+                sys.stdout.write(f"===== Completion {choice.index} =====\n")
 
             sys.stdout.write(choice.text)
 
@@ -161,7 +161,7 @@ class CLICompletions:
             should_print_header = len(completion.choices) > 1
             for choice in sorted(completion.choices, key=lambda c: c.index):
                 if should_print_header:
-                    sys.stdout.write("===== Chat Completion {} =====\n".format(choice.index))
+                    sys.stdout.write(f"===== Chat Completion {choice.index} =====\n")
 
                 sys.stdout.write(choice.text)
 

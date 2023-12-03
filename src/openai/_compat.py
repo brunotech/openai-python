@@ -80,9 +80,7 @@ def parse_obj(model: type[_ModelT], value: object) -> _ModelT:
 
 
 def field_is_required(field: FieldInfo) -> bool:
-    if PYDANTIC_V2:
-        return field.is_required()
-    return field.required  # type: ignore
+    return field.is_required() if PYDANTIC_V2 else field.required
 
 
 def field_get_default(field: FieldInfo) -> Any:
@@ -90,34 +88,24 @@ def field_get_default(field: FieldInfo) -> Any:
     if PYDANTIC_V2:
         from pydantic_core import PydanticUndefined
 
-        if value == PydanticUndefined:
-            return None
-        return value
+        return None if value == PydanticUndefined else value
     return value
 
 
 def field_outer_type(field: FieldInfo) -> Any:
-    if PYDANTIC_V2:
-        return field.annotation
-    return field.outer_type_  # type: ignore
+    return field.annotation if PYDANTIC_V2 else field.outer_type_
 
 
 def get_model_config(model: type[pydantic.BaseModel]) -> Any:
-    if PYDANTIC_V2:
-        return model.model_config
-    return model.__config__  # type: ignore
+    return model.model_config if PYDANTIC_V2 else model.__config__
 
 
 def get_model_fields(model: type[pydantic.BaseModel]) -> dict[str, FieldInfo]:
-    if PYDANTIC_V2:
-        return model.model_fields
-    return model.__fields__  # type: ignore
+    return model.model_fields if PYDANTIC_V2 else model.__fields__
 
 
 def model_copy(model: _ModelT) -> _ModelT:
-    if PYDANTIC_V2:
-        return model.model_copy()
-    return model.copy()  # type: ignore
+    return model.model_copy() if PYDANTIC_V2 else model.copy()
 
 
 def model_json(model: pydantic.BaseModel, *, indent: int | None = None) -> str:
@@ -147,27 +135,19 @@ def model_dump(
 
 
 def model_parse(model: type[_ModelT], data: Any) -> _ModelT:
-    if PYDANTIC_V2:
-        return model.model_validate(data)
-    return model.parse_obj(data)  # pyright: ignore[reportDeprecated]
+    return model.model_validate(data) if PYDANTIC_V2 else model.parse_obj(data)
 
 
 # generic models
-if TYPE_CHECKING:
-
+if not TYPE_CHECKING and PYDANTIC_V2 or TYPE_CHECKING:
+    # there no longer needs to be a distinction in v2 but
+    # we still have to create our own subclass to avoid
+    # inconsistent MRO ordering errors
     class GenericModel(pydantic.BaseModel):
         ...
 
 else:
-    if PYDANTIC_V2:
-        # there no longer needs to be a distinction in v2 but
-        # we still have to create our own subclass to avoid
-        # inconsistent MRO ordering errors
-        class GenericModel(pydantic.BaseModel):
-            ...
+    import pydantic.generics
 
-    else:
-        import pydantic.generics
-
-        class GenericModel(pydantic.generics.GenericModel, pydantic.BaseModel):
-            ...
+    class GenericModel(pydantic.generics.GenericModel, pydantic.BaseModel):
+        ...

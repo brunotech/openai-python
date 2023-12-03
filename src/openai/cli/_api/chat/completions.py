@@ -123,7 +123,7 @@ class CLIChatCompletion:
         should_print_header = len(completion.choices) > 1
         for choice in completion.choices:
             if should_print_header:
-                sys.stdout.write("===== Chat Completion {} =====\n".format(choice.index))
+                sys.stdout.write(f"===== Chat Completion {choice.index} =====\n")
 
             content = choice.message.content if choice.message.content is not None else "None"
             sys.stdout.write(content)
@@ -143,7 +143,7 @@ class CLIChatCompletion:
             should_print_header = len(chunk.choices) > 1
             for choice in chunk.choices:
                 if should_print_header:
-                    sys.stdout.write("===== Chat Completion {} =====\n".format(choice.index))
+                    sys.stdout.write(f"===== Chat Completion {choice.index} =====\n")
 
                 content = choice.delta.content or ""
                 sys.stdout.write(content)

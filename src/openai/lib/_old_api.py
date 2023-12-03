@@ -61,12 +61,7 @@ SYMBOLS = [
 # from this file so that when we re-export the old symbols
 # in `openai/__init__.py` they aren't added to the auto-complete
 # suggestions given by editors
-if TYPE_CHECKING:
-    __all__: list[str] = []
-else:
-    __all__ = SYMBOLS
-
-
+__all__ = [] if TYPE_CHECKING else SYMBOLS
 __locals = locals()
 for symbol in SYMBOLS:
     __locals[symbol] = APIRemovedInV1Proxy(symbol=symbol)

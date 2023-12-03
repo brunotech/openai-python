@@ -18,13 +18,7 @@ BaseModelT = TypeVar("BaseModelT", bound=BaseModel)
 def assert_matches_model(model: type[BaseModelT], value: BaseModelT, *, path: list[str]) -> bool:
     for name, field in get_model_fields(model).items():
         field_value = getattr(value, name)
-        if PYDANTIC_V2:
-            allow_none = False
-        else:
-            # in v1 nullability was structured differently
-            # https://docs.pydantic.dev/2.0/migration/#required-optional-and-nullable-fields
-            allow_none = getattr(field, "allow_none", False)
-
+        allow_none = False if PYDANTIC_V2 else getattr(field, "allow_none", False)
         assert_matches_type(
             field_outer_type(field),
             field_value,

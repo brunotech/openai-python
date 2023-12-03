@@ -67,9 +67,7 @@ def maybe_transform(
 
     See `transform()` for more details.
     """
-    if data is None:
-        return None
-    return transform(data, expected_type)
+    return None if data is None else transform(data, expected_type)
 
 
 # Wrapper over _transform_recursive providing fake types
@@ -104,10 +102,7 @@ def _get_annotated_type(type_: type) -> type | None:
         # Unwrap `Required[Annotated[T, ...]]` to `Annotated[T, ...]`
         type_ = get_args(type_)[0]
 
-    if is_annotated_type(type_):
-        return type_
-
-    return None
+    return type_ if is_annotated_type(type_) else None
 
 
 def _maybe_transform_key(key: str, type_: type) -> str:
@@ -122,11 +117,15 @@ def _maybe_transform_key(key: str, type_: type) -> str:
 
     # ignore the first argument as it is the actual type
     annotations = get_args(annotated_type)[1:]
-    for annotation in annotations:
-        if isinstance(annotation, PropertyInfo) and annotation.alias is not None:
-            return annotation.alias
-
-    return key
+    return next(
+        (
+            annotation.alias
+            for annotation in annotations
+            if isinstance(annotation, PropertyInfo)
+            and annotation.alias is not None
+        ),
+        key,
+    )
 
 
 def _transform_recursive(

@@ -55,7 +55,7 @@ def _low_retry_response_init(*args: Any, **kwargs: Any) -> Any:
 
 def _get_open_connections(client: OpenAI | AsyncOpenAI) -> int:
     transport = client._client._transport
-    assert isinstance(transport, httpx.HTTPTransport) or isinstance(transport, httpx.AsyncHTTPTransport)
+    assert isinstance(transport, (httpx.HTTPTransport, httpx.AsyncHTTPTransport))
 
     pool = transport._pool
     return len(pool._requests)

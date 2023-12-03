@@ -26,10 +26,7 @@ def get_client() -> OpenAI:
 
 def organization_info() -> str:
     organization = openai.organization
-    if organization is not None:
-        return "[organization={}] ".format(organization)
-
-    return ""
+    return f"[organization={organization}] " if organization is not None else ""
 
 
 def print_model(model: BaseModel) -> None:

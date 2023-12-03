@@ -81,10 +81,7 @@ def _extract_items(
     if is_dict(obj):
         try:
             # We are at the last entry in the path so we must remove the field
-            if (len(path)) == index:
-                item = obj.pop(key)
-            else:
-                item = obj[key]
+            item = obj.pop(key) if (len(path)) == index else obj[key]
         except KeyError:
             # Key was not present in the dictionary, this is not indicative of an error
             # as the given path may not point to a required field. We also do not want
@@ -110,7 +107,9 @@ def _extract_items(
                     item,
                     path,
                     index=index,
-                    flattened_key=flattened_key + "[]" if flattened_key is not None else "[]",
+                    flattened_key=f"{flattened_key}[]"
+                    if flattened_key is not None
+                    else "[]",
                 )
                 for item in obj
             ]
@@ -225,7 +224,7 @@ def human_join(seq: Sequence[str], *, delim: str = ", ", final: str = "or") -> s
     if size == 2:
         return f"{seq[0]} {final} {seq[1]}"
 
-    return delim.join(seq[:-1]) + f" {final} {seq[-1]}"
+    return f"{delim.join(seq[:-1])} {final} {seq[-1]}"
 
 
 def quote(string: str) -> str:
@@ -277,7 +276,7 @@ def required_args(*variants: Sequence[str]) -> Callable[[CallableT], CallableT]:
                 except IndexError:
                     raise TypeError(f"{func.__name__}() takes {len(positional)} argument(s) but {len(args)} were given")
 
-            for key in kwargs.keys():
+            for key in kwargs:
                 given_params.add(key)
 
             for variant in variants:
@@ -344,25 +343,19 @@ def coerce_float(val: str) -> float:
 
 
 def coerce_boolean(val: str) -> bool:
-    return val == "true" or val == "1" or val == "on"
+    return val in {"true", "1", "on"}
 
 
 def maybe_coerce_integer(val: str | None) -> int | None:
-    if val is None:
-        return None
-    return coerce_integer(val)
+    return None if val is None else coerce_integer(val)
 
 
 def maybe_coerce_float(val: str | None) -> float | None:
-    if val is None:
-        return None
-    return coerce_float(val)
+    return None if val is None else coerce_float(val)
 
 
 def maybe_coerce_boolean(val: str | None) -> bool | None:
-    if val is None:
-        return None
-    return coerce_boolean(val)
+    return None if val is None else coerce_boolean(val)
 
 
 def removeprefix(string: str, prefix: str) -> str:
@@ -370,9 +363,7 @@ def removeprefix(string: str, prefix: str) -> str:
 
     Backport of `str.removeprefix` for Python < 3.9
     """
-    if string.startswith(prefix):
-        return string[len(prefix) :]
-    return string
+    return string[len(prefix) :] if string.startswith(prefix) else string
 
 
 def removesuffix(string: str, suffix: str) -> str:
@@ -380,9 +371,7 @@ def removesuffix(string: str, suffix: str) -> str:
 
     Backport of `str.removesuffix` for Python < 3.9
     """
-    if string.endswith(suffix):
-        return string[: -len(suffix)]
-    return string
+    return string[: -len(suffix)] if string.endswith(suffix) else string
 
 
 def file_from_path(path: str) -> FileTypes:
@@ -403,8 +392,7 @@ def get_required_header(headers: HeadersLike, header: str) -> str:
     intercaps_header = re.sub(r"([^\w])(\w)", lambda pat: pat.group(1) + pat.group(2).upper(), header.capitalize())
 
     for normalized_header in [header, lower_header, header.upper(), intercaps_header]:
-        value = headers.get(normalized_header)
-        if value:
+        if value := headers.get(normalized_header):
             return value
 
     raise ValueError(f"Could not find {header} header")

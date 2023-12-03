@@ -157,9 +157,7 @@ class BasePage(GenericModel, Generic[ModelT]):
 
     def has_next_page(self) -> bool:
         items = self._get_page_items()
-        if not items:
-            return False
-        return self.next_page_info() is not None
+        return False if not items else self.next_page_info() is not None
 
     def next_page_info(self) -> Optional[PageInfo]:
         ...
@@ -212,8 +210,7 @@ class BaseSyncPage(BasePage[ModelT], Generic[ModelT]):
     # by pydantic.
     def __iter__(self) -> Iterator[ModelT]:  # type: ignore
         for page in self.iter_pages():
-            for item in page._get_page_items():
-                yield item
+            yield from page._get_page_items()
 
     def iter_pages(self: SyncPageT) -> Iterator[SyncPageT]:
         page = self
@@ -543,10 +540,7 @@ class BaseClient(Generic[_HttpxClientT, _DefaultStreamT]):
             raise APIResponseValidationError(response=response, body=data) from err
 
     def _should_stream_response_body(self, *, request: httpx.Request) -> bool:
-        if request.headers.get(STREAMED_RAW_RESPONSE_HEADER) == "true":
-            return True
-
-        return False
+        return request.headers.get(STREAMED_RAW_RESPONSE_HEADER) == "true"
 
     @property
     def qs(self) -> Querystring:
@@ -648,7 +642,7 @@ class BaseClient(Generic[_HttpxClientT, _DefaultStreamT]):
         # Apply some jitter, plus-or-minus half a second.
         jitter = 1 - 0.25 * random()
         timeout = sleep_seconds * jitter
-        return timeout if timeout >= 0 else 0
+        return max(timeout, 0)
 
     def _should_retry(self, response: httpx.Response) -> bool:
         # Note: this is not a standard header
@@ -669,14 +663,7 @@ class BaseClient(Generic[_HttpxClientT, _DefaultStreamT]):
             return True
 
         # Retry on rate limits.
-        if response.status_code == 429:
-            return True
-
-        # Retry internal errors.
-        if response.status_code >= 500:
-            return True
-
-        return False
+        return True if response.status_code == 429 else response.status_code >= 500
 
     def _idempotency_key(self) -> str:
         return f"stainless-python-retry-{uuid.uuid4()}"
@@ -1680,15 +1667,8 @@ def get_platform() -> Platform:
         if distro_id == "freebsd":
             return "FreeBSD"
 
-        if distro_id == "openbsd":
-            return "OpenBSD"
-
-        return "Linux"
-
-    if platform_name:
-        return OtherPlatform(platform_name)
-
-    return "Unknown"
+        return "OpenBSD" if distro_id == "openbsd" else "Linux"
+    return OtherPlatform(platform_name) if platform_name else "Unknown"
 
 
 class OtherArch:
@@ -1720,10 +1700,7 @@ def get_architecture() -> Arch:
     if python_bitness == "32bit":
         return "x32"
 
-    if machine:
-        return OtherArch(machine)
-
-    return "unknown"
+    return OtherArch(machine) if machine else "unknown"
 
 
 def _merge_mappings(

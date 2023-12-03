@@ -20,4 +20,6 @@ def display_error(err: CLIError | APIError | pydantic.ValidationError) -> None:
     if isinstance(err, SilentCLIError):
         return
 
-    sys.stderr.write("{}{}Error:{} {}\n".format(organization_info(), Colors.FAIL, Colors.ENDC, err))
+    sys.stderr.write(
+        f"{organization_info()}{Colors.FAIL}Error:{Colors.ENDC} {err}\n"
+    )

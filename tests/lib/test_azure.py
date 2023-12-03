@@ -47,11 +47,7 @@ def test_implicit_deployment_path(client: Client) -> None:
     ],
 )
 def test_client_copying(client: Client, method: Literal["copy", "with_options"]) -> None:
-    if method == "copy":
-        copied = client.copy()
-    else:
-        copied = client.with_options()
-
+    copied = client.copy() if method == "copy" else client.with_options()
     assert copied._custom_query == {"api-version": "2023-07-01"}
 
 
