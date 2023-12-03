@@ -188,9 +188,9 @@ class BaseModel(pydantic.BaseModel):
             """
             if mode != "python":
                 raise ValueError("mode is only supported in Pydantic v2")
-            if round_trip != False:
+            if round_trip:
                 raise ValueError("round_trip is only supported in Pydantic v2")
-            if warnings != True:
+            if not warnings:
                 raise ValueError("warnings is only supported in Pydantic v2")
             return super().dict(  # pyright: ignore[reportDeprecated]
                 include=include,
@@ -233,9 +233,9 @@ class BaseModel(pydantic.BaseModel):
             Returns:
                 A JSON string representation of the model.
             """
-            if round_trip != False:
+            if round_trip:
                 raise ValueError("round_trip is only supported in Pydantic v2")
-            if warnings != True:
+            if not warnings:
                 raise ValueError("warnings is only supported in Pydantic v2")
             return super().json(  # type: ignore[reportDeprecated]
                 indent=indent,
@@ -252,11 +252,7 @@ def _construct_field(value: object, field: FieldInfo, key: str) -> object:
     if value is None:
         return field_get_default(field)
 
-    if PYDANTIC_V2:
-        type_ = field.annotation
-    else:
-        type_ = cast(type, field.outer_type_)  # type: ignore
-
+    type_ = field.annotation if PYDANTIC_V2 else cast(type, field.outer_type_)
     if type_ is None:
         raise RuntimeError(f"Unexpected field type is None for {key}")
 
@@ -267,12 +263,7 @@ def is_basemodel(type_: type) -> bool:
     """Returns whether or not the given type is either a `BaseModel` or a union of `BaseModel`"""
     origin = get_origin(type_) or type_
     if is_union(type_):
-        for variant in get_args(type_):
-            if is_basemodel(variant):
-                return True
-
-        return False
-
+        return any(is_basemodel(variant) for variant in get_args(type_))
     return issubclass(origin, BaseModel) or issubclass(origin, GenericModel)
 
 
@@ -329,10 +320,7 @@ def construct_type(*, value: object, type_: type) -> object:
     if origin == float:
         if isinstance(value, int):
             coerced = float(value)
-            if coerced != value:
-                return value
-            return coerced
-
+            return value if coerced != value else coerced
         return value
 
     if type_ == datetime:

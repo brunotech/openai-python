@@ -102,10 +102,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
     # prints the package version
     parser.add_argument(
-        "-V",
-        "--version",
-        action="version",
-        version="%(prog)s " + __version__,
+        "-V", "--version", action="version", version=f"%(prog)s {__version__}"
     )
 
     def help() -> None:

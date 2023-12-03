@@ -86,7 +86,7 @@ def additional_column_validator(df: pd.DataFrame, fields: list[str] = ["prompt",
         warn_message = ""
         for ac in additional_columns:
             dups = [c for c in additional_columns if ac in c]
-            if len(dups) > 0:
+            if dups:
                 warn_message += f"\n  WARNING: Some of the additional columns/keys contain `{ac}` in their name. These will be ignored, and the column/key `{ac}` will be used instead. This could also result from a duplicate column/key in the provided file."
         immediate_msg = f"\n- The input file should contain exactly two columns/keys per row. Additional columns/keys present are: {additional_columns}{warn_message}"
         necessary_msg = f"Remove additional columns/keys: {additional_columns}"
@@ -343,7 +343,7 @@ def common_completion_suffix_validator(df: pd.DataFrame) -> Remediation:
     optional_fn = None  # type: ignore
 
     ft_type = infer_task_type(df)
-    if ft_type == "open-ended generation" or ft_type == "classification":
+    if ft_type in ["open-ended generation", "classification"]:
         return Remediation(name="common_suffix")
 
     common_suffix = get_common_xfix(df.completion, xfix="suffix")
@@ -496,8 +496,6 @@ def read_any_format(
                     immediate_msg = "\n- Your JSONL file appears to be in a JSON format. Your file will be converted to JSONL format"
                     necessary_msg = "Your format `JSON` will be converted to `JSONL`"
                     df = pd.read_json(fname, dtype=str).fillna("")  # type: ignore
-                else:
-                    pass  # this is what we expect for a .jsonl file
             elif fname.lower().endswith(".json"):
                 try:
                     # to handle case where .json file is actually a .jsonl file
@@ -631,9 +629,7 @@ def get_outfnames(fname: str, split: bool) -> list[str]:
 
 def get_classification_hyperparams(df: pd.DataFrame) -> tuple[int, object]:
     n_classes = df.completion.nunique()
-    pos_class = None
-    if n_classes == 2:
-        pos_class = df.completion.value_counts().index[0]
+    pos_class = df.completion.value_counts().index[0] if n_classes == 2 else None
     return n_classes, pos_class
 
 
@@ -712,14 +708,15 @@ def infer_task_type(df: pd.DataFrame) -> str:
     """
     Infer the likely fine-tuning task type from the data
     """
-    CLASSIFICATION_THRESHOLD = 3  # min_average instances of each class
     if sum(df.prompt.str.len()) == 0:
         return "open-ended generation"
 
-    if len(df.completion.unique()) < len(df) / CLASSIFICATION_THRESHOLD:
-        return "classification"
-
-    return "conditional generation"
+    CLASSIFICATION_THRESHOLD = 3  # min_average instances of each class
+    return (
+        "classification"
+        if len(df.completion.unique()) < len(df) / CLASSIFICATION_THRESHOLD
+        else "conditional generation"
+    )
 
 
 def get_common_xfix(series: Any, xfix: str = "suffix") -> str:
@@ -781,14 +778,15 @@ def apply_validators(
             df = apply_necessary_remediation(df, remediation)
 
     any_optional_or_necessary_remediations = any(
-        [
-            remediation
-            for remediation in optional_remediations
-            if remediation.optional_msg is not None or remediation.necessary_msg is not None
-        ]
+        remediation
+        for remediation in optional_remediations
+        if remediation.optional_msg is not None
+        or remediation.necessary_msg is not None
     )
     any_necessary_applied = any(
-        [remediation for remediation in optional_remediations if remediation.necessary_msg is not None]
+        remediation
+        for remediation in optional_remediations
+        if remediation.necessary_msg is not None
     )
     any_optional_applied = False
 

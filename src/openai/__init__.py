@@ -157,10 +157,7 @@ class _ModuleClient(OpenAI):
     @property
     @override
     def base_url(self) -> _httpx.URL:
-        if base_url is not None:
-            return _httpx.URL(base_url)
-
-        return super().base_url
+        return _httpx.URL(base_url) if base_url is not None else super().base_url
 
     @base_url.setter
     def base_url(self, url: _httpx.URL | str) -> None:
@@ -287,11 +284,7 @@ def _load_client() -> OpenAI:  # type: ignore[reportUnusedFunction]
             ) is not None:
                 raise _AmbiguousModuleClientUsageError()
 
-            if has_azure or has_azure_ad:
-                api_type = "azure"
-            else:
-                api_type = "openai"
-
+            api_type = "azure" if has_azure or has_azure_ad else "openai"
         if api_type == "azure":
             _client = _AzureModuleClient(  # type: ignore
                 api_version=api_version,

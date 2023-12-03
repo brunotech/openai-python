@@ -104,7 +104,7 @@ class Querystring:
                 raise NotImplementedError("The array indices format is not supported yet")
             elif array_format == "brackets":
                 items = []
-                key = key + "[]"
+                key += "[]"
                 for item in value:
                     items.extend(self._stringify_item(key, item, opts))
                 return items
@@ -114,9 +114,7 @@ class Querystring:
                 )
 
         serialised = self._primitive_value_to_str(value)
-        if not serialised:
-            return []
-        return [(key, serialised)]
+        return [] if not serialised else [(key, serialised)]
 
     def _primitive_value_to_str(self, value: PrimitiveData) -> str:
         # copied from httpx

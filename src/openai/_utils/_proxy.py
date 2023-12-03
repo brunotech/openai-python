@@ -23,9 +23,7 @@ class LazyProxy(Generic[T], ABC):
 
     def __getattr__(self, attr: str) -> object:
         proxied = self.__get_proxied__()
-        if isinstance(proxied, LazyProxy):
-            return proxied  # pyright: ignore
-        return getattr(proxied, attr)
+        return proxied if isinstance(proxied, LazyProxy) else getattr(proxied, attr)
 
     @override
     def __repr__(self) -> str:
@@ -44,9 +42,7 @@ class LazyProxy(Generic[T], ABC):
     @override
     def __dir__(self) -> Iterable[str]:
         proxied = self.__get_proxied__()
-        if isinstance(proxied, LazyProxy):
-            return []
-        return proxied.__dir__()
+        return [] if isinstance(proxied, LazyProxy) else proxied.__dir__()
 
     @property  # type: ignore
     @override

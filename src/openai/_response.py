@@ -150,7 +150,7 @@ class APIResponse(Generic[R]):
             # the response class ourselves but that is something that should be supported directly in httpx
             # as it would be easy to incorrectly construct the Response object due to the multitude of arguments.
             if cast_to != httpx.Response:
-                raise ValueError(f"Subclasses of httpx.Response cannot be passed to `cast_to`")
+                raise ValueError("Subclasses of httpx.Response cannot be passed to `cast_to`")
             return cast(R, response)
 
         # The check here is necessary as we are subverting the the type system
@@ -163,9 +163,9 @@ class APIResponse(Generic[R]):
         # this function would become unsafe but a type checker would not report an error.
         if (
             cast_to is not UnknownResponse
-            and not origin is list
-            and not origin is dict
-            and not origin is Union
+            and origin is not list
+            and origin is not dict
+            and origin is not Union
             and not issubclass(origin, BaseModel)
         ):
             raise RuntimeError(
@@ -221,12 +221,12 @@ class MissingStreamClassError(TypeError):
 
 
 def _extract_stream_chunk_type(stream_cls: type) -> type:
-    args = get_args(stream_cls)
-    if not args:
+    if args := get_args(stream_cls):
+        return cast(type, args[0])
+    else:
         raise TypeError(
             f"Expected stream_cls to have been given a generic type argument, e.g. Stream[Foo] but received {stream_cls}",
         )
-    return cast(type, args[0])
 
 
 def to_raw_response_wrapper(func: Callable[P, R]) -> Callable[P, APIResponse[R]]:

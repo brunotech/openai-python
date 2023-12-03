@@ -15,16 +15,14 @@ from .._streaming import Stream, AsyncStream
 from .._exceptions import OpenAIError
 from .._base_client import DEFAULT_MAX_RETRIES, BaseClient
 
-_deployments_endpoints = set(
-    [
-        "/completions",
-        "/chat/completions",
-        "/embeddings",
-        "/audio/transcriptions",
-        "/audio/translations",
-        "/images/generations",
-    ]
-)
+_deployments_endpoints = {
+    "/completions",
+    "/chat/completions",
+    "/embeddings",
+    "/audio/transcriptions",
+    "/audio/translations",
+    "/images/generations",
+}
 
 
 AzureADTokenProvider = Callable[[], str]
@@ -54,7 +52,7 @@ class BaseAzureClient(BaseClient[_HttpxClientT, _DefaultStreamT]):
     ) -> httpx.Request:
         if options.url in _deployments_endpoints and is_mapping(options.json_data):
             model = options.json_data.get("model")
-            if model is not None and not "/deployments" in str(self.base_url):
+            if model is not None and "/deployments" not in str(self.base_url):
                 options.url = f"/deployments/{model}{options.url}"
 
         return super()._build_request(options)
@@ -189,13 +187,14 @@ class AzureOpenAI(BaseAzureClient[httpx.Client, Stream[Any]], OpenAI):
                     "Must provide one of the `base_url` or `azure_endpoint` arguments, or the `AZURE_OPENAI_ENDPOINT` environment variable"
                 )
 
-            if azure_deployment is not None:
-                base_url = f"{azure_endpoint}/openai/deployments/{azure_deployment}"
             else:
-                base_url = f"{azure_endpoint}/openai"
-        else:
-            if azure_endpoint is not None:
-                raise ValueError("base_url and azure_endpoint are mutually exclusive")
+                base_url = (
+                    f"{azure_endpoint}/openai/deployments/{azure_deployment}"
+                    if azure_deployment is not None
+                    else f"{azure_endpoint}/openai"
+                )
+        elif azure_endpoint is not None:
+            raise ValueError("base_url and azure_endpoint are mutually exclusive")
 
         if api_key is None:
             # define a sentinel value to avoid any typing issues
@@ -422,13 +421,14 @@ class AsyncAzureOpenAI(BaseAzureClient[httpx.AsyncClient, AsyncStream[Any]], Asy
                     "Must provide one of the `base_url` or `azure_endpoint` arguments, or the `AZURE_OPENAI_ENDPOINT` environment variable"
                 )
 
-            if azure_deployment is not None:
-                base_url = f"{azure_endpoint}/openai/deployments/{azure_deployment}"
             else:
-                base_url = f"{azure_endpoint}/openai"
-        else:
-            if azure_endpoint is not None:
-                raise ValueError("base_url and azure_endpoint are mutually exclusive")
+                base_url = (
+                    f"{azure_endpoint}/openai/deployments/{azure_deployment}"
+                    if azure_deployment is not None
+                    else f"{azure_endpoint}/openai"
+                )
+        elif azure_endpoint is not None:
+            raise ValueError("base_url and azure_endpoint are mutually exclusive")
 
         if api_key is None:
             # define a sentinel value to avoid any typing issues

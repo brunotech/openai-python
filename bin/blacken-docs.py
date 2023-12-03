@@ -204,9 +204,7 @@ def format_file(
         print(f"{filename}: Rewriting...")
         with open(filename, "w", encoding="UTF-8") as f:
             f.write(new_contents)
-        return 0
-    else:
-        return 0
+    return 0
 
 
 def main(argv: Sequence[str] | None = None) -> int:

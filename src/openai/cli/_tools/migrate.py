@@ -67,10 +67,7 @@ KEYGEN_ACCOUNT = "custodian-dev"
 
 def _cache_dir() -> Path:
     xdg = os.environ.get("XDG_CACHE_HOME")
-    if xdg is not None:
-        return Path(xdg)
-
-    return Path.home() / ".cache"
+    return Path(xdg) if xdg is not None else Path.home() / ".cache"
 
 
 def _debug(message: str) -> None:
@@ -117,8 +114,7 @@ def install() -> Path:
         response = client.get(meta_url)  # pyright: ignore[reportUnknownMemberType]
 
         data = response.json()
-        errors = data.get("errors")
-        if errors:
+        if errors := data.get("errors"):
             for error in errors:
                 sys.stdout.write(f"{error}\n")
 

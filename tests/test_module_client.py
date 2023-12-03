@@ -65,7 +65,7 @@ def test_max_retries_option() -> None:
 
 
 def test_default_headers_option() -> None:
-    assert openai.default_headers == None
+    assert openai.default_headers is None
 
     openai.default_headers = {"Foo": "Bar"}
 
